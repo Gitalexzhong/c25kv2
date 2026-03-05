@@ -8,21 +8,33 @@
     <fragment
         android:id="@+id/FirstFragment"
         android:name="com.example.c25kv2.FirstFragment"
-        android:label="@string/first_fragment_label"
+        android:label="Run"
         tools:layout="@layout/fragment_first">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_FirstFragment_to_WorkoutFragment"
+            app:destination="@id/WorkoutFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/StatsFragment"
+        android:name="com.example.c25kv2.StatsFragment"
+        android:label="Stats"
+        tools:layout="@layout/fragment_stats" />
+
     <fragment
         android:id="@+id/SecondFragment"
         android:name="com.example.c25kv2.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:label="Settings"
+        tools:layout="@layout/fragment_second" />
 
-        <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+    <fragment
+        android:id="@+id/WorkoutFragment"
+        android:name="com.example.c25kv2.WorkoutFragment"
+        android:label="Workout"
+        tools:layout="@layout/fragment_workout">
+        <argument
+            android:name="workoutTitle"
+            app:argType="string" />
     </fragment>
 </navigation>

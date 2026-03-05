@@ -5,6 +5,10 @@
         android:icon="@android:drawable/ic_menu_directions"
         android:title="Run" />
     <item
+        android:id="@+id/StatsFragment"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Stats" />
+    <item
         android:id="@+id/SecondFragment"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="Settings" />
