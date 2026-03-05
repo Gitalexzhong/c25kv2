@@ -10,6 +10,7 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -28,14 +29,16 @@ class WorkoutFragment : Fragment() {
 
     private val timerRunnable = object : Runnable {
         override fun run() {
-            seconds++
-            val hours = seconds / 3600
-            val minutes = (seconds % 3600) / 60
-            val secs = seconds % 60
-            val timeString = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
-            binding.textTimer.text = timeString
-            updateNotification(timeString)
-            handler.postDelayed(this, 1000)
+            _binding?.let { b ->
+                seconds++
+                val hours = seconds / 3600
+                val minutes = (seconds % 3600) / 60
+                val secs = seconds % 60
+                val timeString = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
+                b.textTimer.text = timeString
+                updateNotification(timeString)
+                handler.postDelayed(this, 1000)
+            }
         }
     }
 
@@ -50,11 +53,29 @@ class WorkoutFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val workoutId = arguments?.getString("workoutId") ?: ""
         val workoutTitle = arguments?.getString("workoutTitle") ?: "Workout"
         binding.textWorkoutInfo.text = workoutTitle
 
         binding.btnCancel.setOnClickListener {
             findNavController().navigateUp()
+        }
+
+        // Debug Mode Logic
+        val sharedPref = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val isDebugMode = sharedPref.getBoolean("debug_mode", false)
+        
+        if (isDebugMode) {
+            binding.btnDebugComplete.visibility = View.VISIBLE
+            binding.btnDebugComplete.setOnClickListener {
+                // Persist completion status
+                with(sharedPref.edit()) {
+                    putBoolean(workoutId, true)
+                    apply()
+                }
+                Toast.makeText(requireContext(), "$workoutTitle Completed!", Toast.LENGTH_SHORT).show()
+                findNavController().navigateUp()
+            }
         }
 
         createNotificationChannel()
@@ -68,8 +89,10 @@ class WorkoutFragment : Fragment() {
 
     private fun stopWorkout() {
         handler.removeCallbacks(timerRunnable)
-        val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID)
+        context?.let { ctx ->
+            val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(NOTIFICATION_ID)
+        }
     }
 
     private fun createNotificationChannel() {
@@ -80,21 +103,25 @@ class WorkoutFragment : Fragment() {
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
-            val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            context?.let { ctx ->
+                val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.createNotificationChannel(channel)
+            }
         }
     }
 
     private fun showNotification(title: String, content: String) {
-        val builder = NotificationCompat.Builder(requireContext(), CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
+        context?.let { ctx ->
+            val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_media_play)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
 
-        val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, builder.build())
+            val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(NOTIFICATION_ID, builder.build())
+        }
     }
 
     private fun updateNotification(content: String) {

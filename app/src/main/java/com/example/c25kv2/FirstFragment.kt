@@ -1,5 +1,6 @@
 package com.example.c25kv2
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -49,21 +50,25 @@ class FirstFragment : Fragment() {
         val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
         val today = LocalDate.now()
         
-        // Logic: Target day should be 2 days in the future or today, whichever is later.
-        // For the purpose of the list, we'll project a schedule starting from today.
+        val sharedPref = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
         var currentScheduledDate = today
 
         // "Get started" section
+        val isTodayStart = currentScheduledDate.isEqual(today)
+        val startTestId = "start_test"
         listItems.add(RunListItem.WeekHeader("Get started"))
         listItems.add(RunListItem.DayItem(
+            id = startTestId,
             title = "First Test",
-            target = "Target: ${currentScheduledDate.format(dateFormatter)}",
-            emoji = "🎯",
+            target = if (isTodayStart) "Today" else "Target: ${currentScheduledDate.format(dateFormatter)}",
+            emoji = if (sharedPref.getBoolean(startTestId, false)) "✅" else "🎯",
             description = "Let's see where you are! Run as far as you can in 10 minutes.",
-            isCompleted = false,
+            isCompleted = sharedPref.getBoolean(startTestId, false),
             segments = listOf(
                 WorkoutSegment("Test Run", 10, colorRun)
-            )
+            ),
+            isExpanded = isTodayStart
         ))
 
         // Weekly sections
@@ -73,7 +78,10 @@ class FirstFragment : Fragment() {
                 // Increment schedule by 2 days for each subsequent workout
                 currentScheduledDate = currentScheduledDate.plusDays(2)
                 
-                // Example logic for varying segments
+                val isToday = currentScheduledDate.isEqual(today)
+                val workoutId = "week_${w}_day_${d}"
+                val isCompleted = sharedPref.getBoolean(workoutId, false)
+                
                 val segments = mutableListOf<WorkoutSegment>()
                 segments.add(WorkoutSegment("Warm up", 5, colorWarmUpCoolDown))
                 repeat(3) {
@@ -83,18 +91,21 @@ class FirstFragment : Fragment() {
                 segments.add(WorkoutSegment("Cool down", 5, colorWarmUpCoolDown))
 
                 listItems.add(RunListItem.DayItem(
+                    id = workoutId,
                     title = "Day $d",
-                    target = "Target: ${currentScheduledDate.format(dateFormatter)}",
-                    emoji = "🏃",
+                    target = if (isToday) "Today" else "Target: ${currentScheduledDate.format(dateFormatter)}",
+                    emoji = if (isCompleted) "✅" else "🏃",
                     description = "A mix of walking and running to build your stamina slowly but surely.",
-                    isCompleted = false,
-                    segments = segments
+                    isCompleted = isCompleted,
+                    segments = segments,
+                    isExpanded = isToday
                 ))
             }
         }
 
-        binding.recyclerviewRun.adapter = RunListAdapter(listItems) { title ->
+        binding.recyclerviewRun.adapter = RunListAdapter(listItems) { id, title ->
             val bundle = Bundle().apply {
+                putString("workoutId", id)
                 putString("workoutTitle", title)
             }
             findNavController().navigate(R.id.action_FirstFragment_to_WorkoutFragment, bundle)
@@ -111,6 +122,7 @@ class FirstFragment : Fragment() {
     sealed class RunListItem {
         data class WeekHeader(val title: String) : RunListItem()
         data class DayItem(
+            val id: String,
             val title: String,
             val target: String,
             val emoji: String,
@@ -123,7 +135,7 @@ class FirstFragment : Fragment() {
 
     private class RunListAdapter(
         private val items: List<RunListItem>,
-        private val onStartClick: (String) -> Unit
+        private val onStartClick: (String, String) -> Unit
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -168,7 +180,7 @@ class FirstFragment : Fragment() {
             }
         }
 
-        class DayViewHolder(view: View, private val onStartClick: (String) -> Unit) : RecyclerView.ViewHolder(view) {
+        class DayViewHolder(view: View, private val onStartClick: (String, String) -> Unit) : RecyclerView.ViewHolder(view) {
             private val emoji: TextView = view.findViewById(R.id.text_emoji)
             private val title: TextView = view.findViewById(R.id.text_day_title)
             private val target: TextView = view.findViewById(R.id.text_target)
@@ -215,7 +227,7 @@ class FirstFragment : Fragment() {
 
                 btnStart.text = if (item.isCompleted) "RESTART" else "START"
                 btnStart.setOnClickListener {
-                    onStartClick(item.title)
+                    onStartClick(item.id, item.title)
                 }
             }
         }

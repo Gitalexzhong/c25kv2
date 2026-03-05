@@ -42,9 +42,10 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/text_session_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Goal: 5K Completion"
+                android:text="0 / 28 sessions completed"
                 android:textSize="14sp" />
 
             <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -87,7 +88,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:text="8 weeks until goal"
+                android:text="9 weeks until goal"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -98,7 +99,7 @@
                 android:id="@+id/text_goal_date"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Target Date: January 25, 2024"
+                android:text="Target Date: Calculating..."
                 android:textColor="#666666"
                 android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
